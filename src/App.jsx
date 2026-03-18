@@ -1,12 +1,20 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { io } from "socket.io-client";
 
-// ─── CONFIG ──────────────────────────────────────────────────────────────────
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3001";
+const SERVER_URL = "https://your-server.onrender.com"; // ← replace with your Render URL
 
-// ─── BOARD DATA ───────────────────────────────────────────────────────────────
+// ─── DATA ─────────────────────────────────────────────────────────────────────
 const CELLS = [
-  { id: 0, row: 10, col: 10, corner: true, name: "GO", type: "go", icon: "★" },
+  {
+    id: 0,
+    row: 10,
+    col: 10,
+    corner: true,
+    name: "GO",
+    type: "go",
+    icon: "★",
+    bg: "#1a472a",
+  },
   {
     id: 1,
     row: 10,
@@ -15,7 +23,7 @@ const CELLS = [
     type: "property",
     color: "#92400e",
   },
-  { id: 2, row: 10, col: 8, name: "Comm Chest", type: "chest", icon: "📦" },
+  { id: 2, row: 10, col: 8, name: "Comm. Chest", type: "chest", icon: "📦" },
   {
     id: 3,
     row: 10,
@@ -25,14 +33,14 @@ const CELLS = [
     color: "#92400e",
   },
   { id: 4, row: 10, col: 6, name: "Income Tax", type: "tax", icon: "💸" },
-  { id: 5, row: 10, col: 5, name: "Reading RR", type: "railroad", icon: "🚂" },
+  { id: 5, row: 10, col: 5, name: "Reading RR", type: "railroad", icon: "✈️" },
   {
     id: 6,
     row: 10,
     col: 4,
     name: "Oriental Ave",
     type: "property",
-    color: "#0369a1",
+    color: "#0e7490",
   },
   { id: 7, row: 10, col: 3, name: "Chance", type: "chance", icon: "?" },
   {
@@ -41,7 +49,7 @@ const CELLS = [
     col: 2,
     name: "Vermont Ave",
     type: "property",
-    color: "#0369a1",
+    color: "#0e7490",
   },
   {
     id: 9,
@@ -49,22 +57,23 @@ const CELLS = [
     col: 1,
     name: "Connecticut",
     type: "property",
-    color: "#0369a1",
+    color: "#0e7490",
   },
   {
     id: 10,
     row: 10,
     col: 0,
     corner: true,
-    name: "Jail",
+    name: "Prison",
     type: "jail",
-    icon: "⚖️",
+    icon: "☠",
+    bg: "#1e1b4b",
   },
   {
     id: 11,
     row: 9,
     col: 0,
-    name: "St Charles",
+    name: "St. Charles",
     type: "property",
     color: "#be185d",
   },
@@ -85,16 +94,16 @@ const CELLS = [
     type: "property",
     color: "#be185d",
   },
-  { id: 15, row: 5, col: 0, name: "Penn RR", type: "railroad", icon: "🚂" },
+  { id: 15, row: 5, col: 0, name: "Penn RR", type: "railroad", icon: "✈️" },
   {
     id: 16,
     row: 4,
     col: 0,
-    name: "St James",
+    name: "St. James",
     type: "property",
     color: "#c2410c",
   },
-  { id: 17, row: 3, col: 0, name: "Comm Chest", type: "chest", icon: "📦" },
+  { id: 17, row: 3, col: 0, name: "Comm. Chest", type: "chest", icon: "📦" },
   {
     id: 18,
     row: 2,
@@ -107,7 +116,7 @@ const CELLS = [
     id: 19,
     row: 1,
     col: 0,
-    name: "New York Ave",
+    name: "New York",
     type: "property",
     color: "#c2410c",
   },
@@ -116,9 +125,10 @@ const CELLS = [
     row: 0,
     col: 0,
     corner: true,
-    name: "Free Parking",
+    name: "Vacation",
     type: "freeparking",
-    icon: "🅿",
+    icon: "🌴",
+    bg: "#064e3b",
   },
   {
     id: 21,
@@ -145,7 +155,7 @@ const CELLS = [
     type: "property",
     color: "#b91c1c",
   },
-  { id: 25, row: 0, col: 5, name: "B&O RR", type: "railroad", icon: "🚂" },
+  { id: 25, row: 0, col: 5, name: "B&O RR", type: "railroad", icon: "✈️" },
   {
     id: 26,
     row: 0,
@@ -162,12 +172,12 @@ const CELLS = [
     type: "property",
     color: "#a16207",
   },
-  { id: 28, row: 0, col: 8, name: "Water Works", type: "utility", icon: "💧" },
+  { id: 28, row: 0, col: 8, name: "Water Co", type: "utility", icon: "💧" },
   {
     id: 29,
     row: 0,
     col: 9,
-    name: "Marvin Gdns",
+    name: "Marvin Gardens",
     type: "property",
     color: "#a16207",
   },
@@ -176,9 +186,10 @@ const CELLS = [
     row: 0,
     col: 10,
     corner: true,
-    name: "Go To Jail",
+    name: "Go to Prison",
     type: "gotojail",
     icon: "🚔",
+    bg: "#4c1d95",
   },
   {
     id: 31,
@@ -192,11 +203,11 @@ const CELLS = [
     id: 32,
     row: 2,
     col: 10,
-    name: "N Carolina",
+    name: "N. Carolina",
     type: "property",
     color: "#15803d",
   },
-  { id: 33, row: 3, col: 10, name: "Comm Chest", type: "chest", icon: "📦" },
+  { id: 33, row: 3, col: 10, name: "Comm. Chest", type: "chest", icon: "📦" },
   {
     id: 34,
     row: 4,
@@ -205,7 +216,7 @@ const CELLS = [
     type: "property",
     color: "#15803d",
   },
-  { id: 35, row: 5, col: 10, name: "Short Line", type: "railroad", icon: "🚂" },
+  { id: 35, row: 5, col: 10, name: "Short Line", type: "railroad", icon: "✈️" },
   { id: 36, row: 6, col: 10, name: "Chance", type: "chance", icon: "?" },
   {
     id: 37,
@@ -226,7 +237,7 @@ const CELLS = [
   },
 ];
 
-const BOARD_PRICES = {
+const PRICES = {
   1: 60,
   3: 60,
   6: 100,
@@ -269,161 +280,38 @@ const PCOLORS = [
   "#ec4899",
 ];
 
-const $ = (n) => `$${Number(n || 0).toLocaleString()}`;
-
-// ─── STYLES ───────────────────────────────────────────────────────────────────
-const S = {
-  app: {
-    minHeight: "100vh",
-    background: "#0f1117",
-    color: "#fff",
-    fontFamily: "'Inter',system-ui,sans-serif",
-    display: "flex",
-    flexDirection: "column",
-  },
-  nav: {
-    background: "#161b27",
-    borderBottom: "1px solid #1e2535",
-    padding: "0 20px",
-    height: 56,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    flexShrink: 0,
-  },
-  logo: { display: "flex", alignItems: "center", gap: 10 },
-  logoBox: {
-    width: 34,
-    height: 34,
-    borderRadius: 9,
-    background: "linear-gradient(135deg,#22c55e,#16a34a)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: 18,
-  },
-  logoText: { fontWeight: 800, fontSize: 18, letterSpacing: 1, color: "#fff" },
-  badge: {
-    background: "#1e2535",
-    fontSize: 11,
-    padding: "2px 10px",
-    borderRadius: 20,
-    color: "#6b7280",
-    fontWeight: 600,
-  },
-  main: { flex: 1, display: "flex", overflow: "hidden", minHeight: 0 },
-  board_wrap: {
-    flex: 1,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 12,
-    overflow: "auto",
-    background: "#0f1117",
-    minWidth: 0,
-  },
-  sidebar: {
-    width: 300,
-    minWidth: 260,
-    maxWidth: 340,
-    background: "#161b27",
-    borderLeft: "1px solid #1e2535",
-    display: "flex",
-    flexDirection: "column",
-    overflow: "hidden",
-  },
-  sideScroll: { flex: 1, overflowY: "auto", overflowX: "hidden" },
-  section: { padding: "14px 16px", borderBottom: "1px solid #1e2535" },
-  sLabel: {
-    color: "#374151",
-    fontSize: 10,
-    fontWeight: 700,
-    letterSpacing: 2,
-    marginBottom: 8,
-  },
-  card: {
-    background: "#0f1117",
-    border: "1px solid #1e2535",
-    borderRadius: 12,
-    padding: 14,
-  },
-  input: {
-    width: "100%",
-    background: "#0f1117",
-    border: "1px solid #1e2535",
-    borderRadius: 9,
-    padding: "10px 14px",
-    color: "#fff",
-    fontSize: 14,
-    outline: "none",
-    boxSizing: "border-box",
-  },
-  btn: (bg = "#374151", full = true) => ({
-    width: full ? "100%" : "auto",
-    background: bg,
-    color: "#fff",
-    border: "none",
-    padding: "10px 16px",
-    borderRadius: 10,
-    fontWeight: 700,
-    fontSize: 13,
-    cursor: "pointer",
-  }),
-  greenBtn: {
-    width: "100%",
-    background: "linear-gradient(135deg,#22c55e,#16a34a)",
-    color: "#fff",
-    border: "none",
-    padding: "13px",
-    borderRadius: 12,
-    fontWeight: 700,
-    fontSize: 15,
-    cursor: "pointer",
-    letterSpacing: 1,
-  },
-  disabledBtn: {
-    width: "100%",
-    background: "#1e2535",
-    color: "#4b5563",
-    border: "none",
-    padding: "13px",
-    borderRadius: 12,
-    fontWeight: 700,
-    fontSize: 15,
-    cursor: "not-allowed",
-    letterSpacing: 1,
-  },
-};
+const $m = (n) => `$${Number(n || 0).toLocaleString()}`;
 
 // ─── APP ──────────────────────────────────────────────────────────────────────
 export default function App() {
   const [socket, setSocket] = useState(null);
-  const [connected, setConnected] = useState(false);
+  const [conn, setConn] = useState(false);
   const [game, setGame] = useState(null);
   const [myId, setMyId] = useState(null);
   const [roomId, setRoomId] = useState("");
   const [name, setName] = useState("");
   const [token, setToken] = useState("🎩");
   const [err, setErr] = useState("");
-  const [bidAmt, setBidAmt] = useState("");
-  const [showTrade, setShowTrade] = useState(false);
-  const [trade, setTrade] = useState({
+  const [bidAmt, setBid] = useState("");
+  const [showTrade, setTrade] = useState(false);
+  const [tf, setTF] = useState({
     to: "",
-    offerMoney: 0,
-    wantMoney: 0,
-    offerProps: [],
-    wantProps: [],
+    offerM: 0,
+    wantM: 0,
+    offerP: [],
+    wantP: [],
   });
-  const [sideTab, setSideTab] = useState("actions"); // actions | players | log
+  const [chat, setChat] = useState([]);
+  const [chatMsg, setChatMsg] = useState("");
   const logRef = useRef(null);
 
   useEffect(() => {
     const s = io(SERVER_URL, { transports: ["websocket", "polling"] });
     s.on("connect", () => {
-      setConnected(true);
+      setConn(true);
       setMyId(s.id);
     });
-    s.on("disconnect", () => setConnected(false));
+    s.on("disconnect", () => setConn(false));
     s.on("gameState", (g) => setGame(g));
     s.on("err", (m) => {
       setErr(m);
@@ -442,7 +330,7 @@ export default function App() {
     [socket, roomId],
   );
 
-  if (!connected) return <Splash />;
+  if (!conn) return <Splash />;
   if (!game || game.phase === "lobby")
     return (
       <Lobby
@@ -471,99 +359,371 @@ export default function App() {
     ([, p]) => p.owner === myId,
   );
 
+  const sendChat = () => {
+    if (!chatMsg.trim()) return;
+    setChat((c) => [
+      ...c,
+      { name: me?.name || "?", msg: chatMsg, token: me?.token },
+    ]);
+    setChatMsg("");
+  };
+
   return (
-    <div style={S.app}>
+    <div
+      style={{
+        width: "100vw",
+        height: "100vh",
+        background: "#13111a",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        fontFamily: "'Inter',system-ui,sans-serif",
+        color: "#fff",
+      }}
+    >
       <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
       />
 
-      {/* NAV */}
-      <nav style={S.nav}>
-        <div style={S.logo}>
-          <div style={S.logoBox}>🎩</div>
-          <span style={S.logoText}>MONOPOLY</span>
-          <span style={S.badge}>ONLINE</span>
+      {/* ── TOP NAV ── */}
+      <nav
+        style={{
+          height: 52,
+          background: "#1a1625",
+          borderBottom: "1px solid #2d2640",
+          display: "flex",
+          alignItems: "center",
+          padding: "0 20px",
+          gap: 16,
+          flexShrink: 0,
+          zIndex: 10,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              background: "linear-gradient(135deg,#22c55e,#16a34a)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 16,
+            }}
+          >
+            🎩
+          </div>
+          <span
+            style={{
+              fontWeight: 800,
+              fontSize: 17,
+              color: "#fff",
+              letterSpacing: 1,
+            }}
+          >
+            MONOPOLY
+          </span>
+          <span
+            style={{
+              fontSize: 11,
+              color: "#6b7280",
+              background: "#2d2640",
+              padding: "2px 8px",
+              borderRadius: 12,
+              fontWeight: 600,
+            }}
+          >
+            ONLINE
+          </span>
         </div>
+        <div style={{ flex: 1 }} />
+        {/* room url box */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 10,
-            flexWrap: "wrap",
-          }}
-        >
-          <div style={{ ...S.badge, color: "#9ca3af" }}>
-            Room: <b style={{ color: "#fff" }}>{roomId}</b>
-          </div>
-          {me && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                background: "#1e2535",
-                padding: "5px 12px",
-                borderRadius: 20,
-              }}
-            >
-              <span style={{ fontSize: 16 }}>{me.token}</span>
-              <span style={{ fontWeight: 600, fontSize: 13 }}>{me.name}</span>
-              <span style={{ color: "#22c55e", fontWeight: 700, fontSize: 13 }}>
-                {$(me.money)}
-              </span>
-            </div>
-          )}
-        </div>
-      </nav>
-
-      {/* ERROR TOAST */}
-      {err && (
-        <div
-          style={{
-            position: "fixed",
-            top: 66,
-            right: 16,
-            background: "#ef4444",
-            color: "#fff",
-            padding: "10px 18px",
+            gap: 8,
+            background: "#2d2640",
             borderRadius: 10,
-            zIndex: 999,
-            fontWeight: 600,
+            padding: "6px 12px",
             fontSize: 13,
-            boxShadow: "0 4px 20px rgba(239,68,68,0.4)",
           }}
         >
-          ⚠ {err}
+          <span style={{ color: "#9ca3af" }}>Room:</span>
+          <span style={{ color: "#a78bfa", fontWeight: 700, letterSpacing: 1 }}>
+            {roomId}
+          </span>
+          <button
+            onClick={() => navigator.clipboard?.writeText(roomId)}
+            style={{
+              background: "#3d3550",
+              border: "none",
+              color: "#a78bfa",
+              borderRadius: 6,
+              padding: "3px 8px",
+              fontSize: 11,
+              cursor: "pointer",
+              fontWeight: 600,
+            }}
+          >
+            Copy
+          </button>
         </div>
-      )}
-
-      <div style={S.main}>
-        {/* BOARD */}
-        <div style={S.board_wrap}>
-          <Board game={game} myId={myId} />
-        </div>
-
-        {/* SIDEBAR */}
-        <aside style={S.sidebar}>
-          {/* Turn banner */}
+        {me && (
           <div
             style={{
-              background: isMyTurn
-                ? "linear-gradient(135deg,#052e16,#064e3b)"
-                : "#1a2035",
-              padding: "14px 16px",
-              borderBottom: "1px solid #1e2535",
-              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              background: "#2d2640",
+              borderRadius: 10,
+              padding: "6px 12px",
+            }}
+          >
+            <span style={{ fontSize: 18 }}>{me.token}</span>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 13, color: "#fff" }}>
+                {me.name}
+              </div>
+              <div style={{ fontSize: 11, color: "#22c55e", fontWeight: 700 }}>
+                {$m(me.money)}
+              </div>
+            </div>
+          </div>
+        )}
+        {err && (
+          <div
+            style={{
+              background: "#ef4444",
+              color: "#fff",
+              padding: "6px 14px",
+              borderRadius: 9,
+              fontSize: 13,
+              fontWeight: 600,
+            }}
+          >
+            ⚠ {err}
+          </div>
+        )}
+      </nav>
+
+      {/* ── MAIN 3-COLUMN LAYOUT ── */}
+      <div
+        style={{ flex: 1, display: "flex", overflow: "hidden", minHeight: 0 }}
+      >
+        {/* ── LEFT SIDEBAR ── */}
+        <div
+          style={{
+            width: 260,
+            background: "#1a1625",
+            borderRight: "1px solid #2d2640",
+            display: "flex",
+            flexDirection: "column",
+            flexShrink: 0,
+          }}
+        >
+          {/* Players */}
+          <div
+            style={{
+              padding: "14px 14px 10px",
+              borderBottom: "1px solid #2d2640",
             }}
           >
             <div
               style={{
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: 700,
+                color: "#6b7280",
                 letterSpacing: 2,
-                color: "#374151",
-                marginBottom: 8,
+                marginBottom: 10,
+              }}
+            >
+              PLAYERS · {game.players.length}
+            </div>
+            {game.players.map((p, i) => (
+              <PlayerCard
+                key={p.id}
+                p={p}
+                isMe={p.id === myId}
+                isCurrent={p.id === cp?.id}
+                color={PCOLORS[i % PCOLORS.length]}
+                propCount={
+                  Object.values(game.properties || {}).filter(
+                    (x) => x.owner === p.id,
+                  ).length
+                }
+              />
+            ))}
+          </div>
+
+          {/* Chat */}
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                padding: "10px 14px 6px",
+                borderBottom: "1px solid #2d2640",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: "#6b7280",
+                  letterSpacing: 2,
+                }}
+              >
+                CHAT
+              </div>
+            </div>
+            <div
+              ref={logRef}
+              style={{
+                flex: 1,
+                overflowY: "auto",
+                padding: "8px 14px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
+              }}
+            >
+              {/* game log */}
+              {(game.log || []).map((l, i) => (
+                <div
+                  key={i}
+                  style={{
+                    fontSize: 11,
+                    color: "#6b7280",
+                    lineHeight: 1.5,
+                    padding: "2px 0",
+                  }}
+                >
+                  {l}
+                </div>
+              ))}
+              {/* chat messages */}
+              {chat.map((c, i) => (
+                <div
+                  key={"c" + i}
+                  style={{
+                    fontSize: 12,
+                    color: "#d1d5db",
+                    background: "#2d2640",
+                    borderRadius: 8,
+                    padding: "5px 8px",
+                    marginTop: 2,
+                  }}
+                >
+                  <span style={{ fontWeight: 700, color: "#a78bfa" }}>
+                    {c.token} {c.name}:{" "}
+                  </span>
+                  {c.msg}
+                </div>
+              ))}
+            </div>
+            <div
+              style={{
+                padding: "8px 14px",
+                borderTop: "1px solid #2d2640",
+                display: "flex",
+                gap: 6,
+              }}
+            >
+              <input
+                value={chatMsg}
+                onChange={(e) => setChatMsg(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && sendChat()}
+                placeholder="Say something..."
+                style={{
+                  flex: 1,
+                  background: "#2d2640",
+                  border: "1px solid #3d3550",
+                  borderRadius: 8,
+                  padding: "7px 10px",
+                  color: "#fff",
+                  fontSize: 12,
+                  outline: "none",
+                }}
+              />
+              <button
+                onClick={sendChat}
+                style={{
+                  background: "#7c3aed",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "7px 12px",
+                  cursor: "pointer",
+                  fontSize: 13,
+                  fontWeight: 700,
+                }}
+              >
+                →
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ── CENTER: BOARD ── */}
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "#13111a",
+            overflow: "hidden",
+            position: "relative",
+            padding: 8,
+          }}
+        >
+          <Board
+            game={game}
+            myId={myId}
+            isMyTurn={isMyTurn}
+            emit={emit}
+            bidAmt={bidAmt}
+            setBid={setBid}
+          />
+        </div>
+
+        {/* ── RIGHT SIDEBAR ── */}
+        <div
+          style={{
+            width: 280,
+            background: "#1a1625",
+            borderLeft: "1px solid #2d2640",
+            display: "flex",
+            flexDirection: "column",
+            flexShrink: 0,
+            overflow: "hidden",
+          }}
+        >
+          {/* Current turn */}
+          <div
+            style={{
+              padding: "14px",
+              borderBottom: "1px solid #2d2640",
+              background: isMyTurn
+                ? "linear-gradient(135deg,#052e16,#064e3b)"
+                : "#1a1625",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                color: "#6b7280",
+                letterSpacing: 2,
+                marginBottom: 10,
               }}
             >
               CURRENT TURN
@@ -571,31 +731,22 @@ export default function App() {
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <div
                 style={{
-                  width: 42,
-                  height: 42,
-                  borderRadius: 11,
-                  background: "#0f1117",
-                  border: `2px solid ${isMyTurn ? "#22c55e" : "#1e2535"}`,
+                  width: 46,
+                  height: 46,
+                  borderRadius: 12,
+                  background: "#2d2640",
+                  border: `2px solid ${isMyTurn ? "#22c55e" : "#3d3550"}`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: 22,
+                  fontSize: 24,
                   flexShrink: 0,
                 }}
               >
                 {cp?.token}
               </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    fontWeight: 700,
-                    fontSize: 15,
-                    color: "#fff",
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 700, fontSize: 15, color: "#fff" }}>
                   {cp?.name}
                 </div>
                 <div
@@ -603,59 +754,55 @@ export default function App() {
                     fontSize: 12,
                     color: isMyTurn ? "#22c55e" : "#6b7280",
                     fontWeight: 600,
+                    marginTop: 2,
                   }}
                 >
                   {isMyTurn ? "✦ Your turn!" : "Waiting..."}
                 </div>
-              </div>
-              {game.lastRoll && (
-                <div style={{ display: "flex", gap: 5, flexShrink: 0 }}>
-                  <DieComp v={game.lastRoll[0]} />
-                  <DieComp v={game.lastRoll[1]} />
+                <div
+                  style={{ fontSize: 12, color: "#a78bfa", fontWeight: 600 }}
+                >
+                  {$m(cp?.money)}
                 </div>
-              )}
+              </div>
             </div>
-            {game.pendingCard && (
+          </div>
+
+          {/* Card drawn */}
+          {game.pendingCard && (
+            <div
+              style={{
+                padding: "12px 14px",
+                borderBottom: "1px solid #2d2640",
+                background: "rgba(124,58,237,0.1)",
+              }}
+            >
               <div
                 style={{
-                  marginTop: 10,
-                  background: "rgba(0,0,0,0.35)",
-                  borderRadius: 9,
-                  padding: "9px 12px",
-                  border: "1px solid #2d3748",
+                  fontSize: 10,
+                  fontWeight: 700,
+                  color:
+                    game.pendingCard.deck === "chance" ? "#fbbf24" : "#60a5fa",
+                  letterSpacing: 2,
+                  marginBottom: 5,
                 }}
               >
-                <div
-                  style={{
-                    color:
-                      game.pendingCard.deck === "chance"
-                        ? "#fbbf24"
-                        : "#60a5fa",
-                    fontSize: 10,
-                    fontWeight: 700,
-                    marginBottom: 3,
-                  }}
-                >
-                  {game.pendingCard.deck === "chance"
-                    ? "🃏 CHANCE"
-                    : "📦 COMMUNITY CHEST"}
-                </div>
-                <div
-                  style={{ color: "#e2e8f0", fontSize: 12, lineHeight: 1.5 }}
-                >
-                  {game.pendingCard.text}
-                </div>
+                {game.pendingCard.deck === "chance"
+                  ? "🃏 CHANCE"
+                  : "📦 COMMUNITY CHEST"}
               </div>
-            )}
-          </div>
+              <div style={{ fontSize: 13, color: "#e2e8f0", lineHeight: 1.5 }}>
+                {game.pendingCard.text}
+              </div>
+            </div>
+          )}
 
           {/* Pending trade */}
           {game.pendingTrade?.to === myId && (
             <div
               style={{
-                padding: "12px 16px",
-                borderBottom: "1px solid #1e2535",
-                flexShrink: 0,
+                padding: "12px 14px",
+                borderBottom: "1px solid #2d2640",
               }}
             >
               <TradeReview
@@ -667,158 +814,82 @@ export default function App() {
             </div>
           )}
 
-          {/* Tab bar */}
-          <div
-            style={{
-              display: "flex",
-              borderBottom: "1px solid #1e2535",
-              flexShrink: 0,
-            }}
-          >
-            {[
-              ["actions", "⚡ Actions"],
-              ["players", "👥 Players"],
-              ["log", "📋 Log"],
-            ].map(([k, l]) => (
-              <button
-                key={k}
-                onClick={() => setSideTab(k)}
-                style={{
-                  flex: 1,
-                  padding: "10px 0",
-                  fontSize: 12,
-                  fontWeight: 700,
-                  border: "none",
-                  cursor: "pointer",
-                  background: sideTab === k ? "#0f1117" : "transparent",
-                  color: sideTab === k ? "#22c55e" : "#4b5563",
-                  borderBottom:
-                    sideTab === k
-                      ? "2px solid #22c55e"
-                      : "2px solid transparent",
-                  transition: "all 0.15s",
-                }}
-              >
-                {l}
-              </button>
-            ))}
-          </div>
-
-          <div style={S.sideScroll}>
-            {/* ACTIONS TAB */}
-            {sideTab === "actions" && (
-              <div style={S.section}>
-                {isMyTurn ? (
-                  <Actions
-                    game={game}
-                    me={me}
-                    emit={emit}
-                    bidAmt={bidAmt}
-                    setBidAmt={setBidAmt}
-                    showTrade={showTrade}
-                    setShowTrade={setShowTrade}
-                    trade={trade}
-                    setTrade={setTrade}
-                  />
-                ) : (
-                  <div
-                    style={{
-                      textAlign: "center",
-                      padding: "20px 0",
-                      color: "#4b5563",
-                      fontSize: 13,
-                    }}
-                  >
-                    Waiting for {cp?.name}...
-                  </div>
-                )}
-                {/* My properties always visible */}
-                {myProps.length > 0 && (
-                  <div style={{ marginTop: 16 }}>
-                    <div style={S.sLabel}>MY PROPERTIES</div>
-                    <MyProps props={myProps} isMyTurn={isMyTurn} emit={emit} />
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* PLAYERS TAB */}
-            {sideTab === "players" && (
-              <div style={S.section}>
-                {game.players.map((p, i) => (
-                  <PlayerRow
-                    key={p.id}
-                    p={p}
-                    isMe={p.id === myId}
-                    isCurrent={p.id === cp?.id}
-                    color={PCOLORS[i % PCOLORS.length]}
-                    propCount={
-                      Object.values(game.properties || {}).filter(
-                        (x) => x.owner === p.id,
-                      ).length
-                    }
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* LOG TAB */}
-            {sideTab === "log" && (
+          {/* Actions */}
+          <div style={{ flex: 1, overflowY: "auto", padding: "14px" }}>
+            {isMyTurn ? (
+              <Actions
+                game={game}
+                me={me}
+                emit={emit}
+                bidAmt={bidAmt}
+                setBid={setBid}
+                showTrade={showTrade}
+                setTrade={setTrade}
+                tf={tf}
+                setTF={setTF}
+              />
+            ) : (
               <div
                 style={{
-                  ...S.section,
-                  display: "flex",
-                  flexDirection: "column",
+                  textAlign: "center",
+                  padding: "24px 0",
+                  color: "#4b5563",
+                  fontSize: 13,
                 }}
               >
-                <div ref={logRef} style={{ maxHeight: 400, overflowY: "auto" }}>
-                  {(game.log || [])
-                    .slice()
-                    .reverse()
-                    .map((l, i) => (
-                      <div
-                        key={i}
-                        style={{
-                          color: "#6b7280",
-                          fontSize: 11,
-                          padding: "4px 0",
-                          borderBottom: "1px solid #111827",
-                          lineHeight: 1.5,
-                        }}
-                      >
-                        {l}
-                      </div>
-                    ))}
+                <div style={{ fontSize: 32, marginBottom: 8 }}>⏳</div>
+                Waiting for {cp?.name}...
+              </div>
+            )}
+
+            {/* My properties */}
+            {myProps.length > 0 && (
+              <div style={{ marginTop: 16 }}>
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: "#6b7280",
+                    letterSpacing: 2,
+                    marginBottom: 8,
+                  }}
+                >
+                  MY PROPERTIES
                 </div>
+                <MyProps props={myProps} isMyTurn={isMyTurn} emit={emit} />
               </div>
             )}
           </div>
-        </aside>
+        </div>
       </div>
     </div>
   );
 }
 
 // ─── BOARD ────────────────────────────────────────────────────────────────────
-function Board({ game, myId }) {
-  const { players, properties } = game;
-  const ref = useRef(null);
-  const [size, setSize] = useState(560);
+function Board({ game, myId, isMyTurn, emit, bidAmt, setBid }) {
+  const { players, properties, turnPhase, lastRoll, phase } = game;
+  const wrapRef = useRef(null);
+  const [size, setSize] = useState(620);
 
   useEffect(() => {
-    const el = ref.current;
+    const el = wrapRef.current;
     if (!el) return;
-    const ro = new ResizeObserver((entries) => {
-      const { width, height } = entries[0].contentRect;
-      setSize(Math.max(260, Math.min(width - 8, height - 8, 640)));
+    const ro = new ResizeObserver((e) => {
+      const { width, height } = e[0].contentRect;
+      setSize(Math.floor(Math.min(width, height) - 16));
     });
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
 
-  const C = Math.round(size * 0.122),
-    S2 = Math.round((size - C * 2) / 9);
-  const TOTAL = C * 2 + S2 * 9;
+  const cp = game.players[game.currentPlayerIndex];
+  const me = players.find((p) => p.id === myId);
+
+  // board math
+  const CORNER = Math.round(size * 0.13);
+  const CELL = Math.round((size - CORNER * 2) / 9);
+  const TOTAL = CORNER * 2 + CELL * 9;
 
   const byCell = {};
   players.forEach((p) => {
@@ -828,7 +899,7 @@ function Board({ game, myId }) {
 
   return (
     <div
-      ref={ref}
+      ref={wrapRef}
       style={{
         width: "100%",
         height: "100%",
@@ -843,36 +914,60 @@ function Board({ game, myId }) {
           width: TOTAL,
           height: TOTAL,
           flexShrink: 0,
-          border: "2px solid #1e2535",
-          borderRadius: 8,
-          boxShadow: "0 0 60px rgba(0,0,0,0.8), 0 0 0 1px #0f1117",
-          background: "#0d1520",
+          borderRadius: 12,
           overflow: "hidden",
+          boxShadow: "0 0 0 3px #2d2640, 0 0 80px rgba(0,0,0,0.9)",
         }}
       >
+        {/* CELLS */}
         {CELLS.map((cell) => {
           const isC = !!cell.corner;
-          const w = isC ? C : S2,
-            h = isC ? C : S2;
+          const w = isC ? CORNER : CELL,
+            h = isC ? CORNER : CELL;
           const left =
             cell.col === 0
               ? 0
               : cell.col === 10
-                ? TOTAL - C
-                : C + (cell.col - 1) * S2;
+                ? TOTAL - CORNER
+                : CORNER + (cell.col - 1) * CELL;
           const top =
             cell.row === 0
               ? 0
               : cell.row === 10
-                ? TOTAL - C
-                : C + (cell.row - 1) * S2;
+                ? TOTAL - CORNER
+                : CORNER + (cell.row - 1) * CELL;
           const prop = properties?.[cell.id];
           const ownerIdx = prop?.owner
             ? players.findIndex((p) => p.id === prop.owner)
             : -1;
           const here = byCell[cell.id] || [];
-          const barH = Math.max(8, Math.round(h * 0.19));
-          const fs = Math.max(5, Math.round(TOTAL * 0.013));
+
+          // determine rotation for side cells
+          let rotate = "";
+          if (!isC) {
+            if (cell.col === 0) rotate = "rotate(90deg)";
+            else if (cell.col === 10) rotate = "rotate(-90deg)";
+            else if (cell.row === 0) rotate = "rotate(180deg)";
+          }
+
+          const barH = Math.max(10, Math.round(h * 0.22));
+          const fs = Math.max(7, Math.round(TOTAL * 0.0115));
+          const pricefs = Math.max(6, Math.round(TOTAL * 0.01));
+
+          // cell bg color
+          const cellBg =
+            cell.bg ||
+            (cell.type === "property"
+              ? "#1e1b2e"
+              : cell.type === "railroad" || cell.type === "utility"
+                ? "#1a2035"
+                : cell.type === "chance"
+                  ? "#2d1b4e"
+                  : cell.type === "chest"
+                    ? "#1a2a3a"
+                    : cell.type === "tax"
+                      ? "#2a1a1a"
+                      : "#1e1b2e");
 
           return (
             <div
@@ -883,8 +978,8 @@ function Board({ game, myId }) {
                 top,
                 width: w,
                 height: h,
-                border: "1px solid #1e2535",
-                background: isC ? "#111827" : "#13192a",
+                background: cellBg,
+                border: "1px solid #2d2640",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
@@ -899,28 +994,33 @@ function Board({ game, myId }) {
                 <div
                   style={{
                     position: "absolute",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: barH,
+                    ...(cell.row === 10
+                      ? { bottom: 0, left: 0, right: 0, height: barH }
+                      : cell.row === 0
+                        ? { top: 0, left: 0, right: 0, height: barH }
+                        : cell.col === 0
+                          ? { top: 0, bottom: 0, right: 0, width: barH }
+                          : { top: 0, bottom: 0, left: 0, width: barH }),
                     background: cell.color,
-                    opacity: prop?.mortgaged ? 0.2 : 0.9,
+                    opacity: prop?.mortgaged ? 0.25 : 1,
+                    borderRadius: 2,
                   }}
                 />
               )}
 
-              {/* Owner glow dot */}
+              {/* Owner dot */}
               {ownerIdx >= 0 && (
                 <div
                   style={{
                     position: "absolute",
-                    top: cell.color ? barH + 2 : 2,
-                    right: 2,
-                    width: Math.max(5, Math.round(w * 0.13)),
-                    height: Math.max(5, Math.round(w * 0.13)),
+                    top: 3,
+                    right: 3,
+                    width: Math.max(6, Math.round(w * 0.12)),
+                    height: Math.max(6, Math.round(w * 0.12)),
                     borderRadius: "50%",
                     background: PCOLORS[ownerIdx % PCOLORS.length],
-                    boxShadow: `0 0 5px ${PCOLORS[ownerIdx % PCOLORS.length]}`,
+                    boxShadow: `0 0 6px ${PCOLORS[ownerIdx % PCOLORS.length]}`,
+                    zIndex: 2,
                   }}
                 />
               )}
@@ -930,9 +1030,10 @@ function Board({ game, myId }) {
                 <div
                   style={{
                     position: "absolute",
-                    top: cell.color ? barH + 1 : 2,
-                    left: 1,
-                    fontSize: Math.max(6, Math.round(w * 0.16)),
+                    top: 3,
+                    left: 3,
+                    fontSize: Math.max(8, Math.round(w * 0.16)),
+                    zIndex: 2,
                     lineHeight: 1,
                   }}
                 >
@@ -940,69 +1041,138 @@ function Board({ game, myId }) {
                 </div>
               )}
 
-              {/* Corner icon */}
+              {/* CORNER cells */}
               {isC && (
                 <div
                   style={{
-                    fontSize: Math.round(C * 0.32),
-                    marginBottom: 4,
-                    color: "#e2e8f0",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "100%",
+                    height: "100%",
+                    padding: 4,
                   }}
                 >
-                  {cell.icon}
+                  <div
+                    style={{
+                      fontSize: Math.round(CORNER * 0.3),
+                      lineHeight: 1,
+                      color: "#fff",
+                    }}
+                  >
+                    {cell.icon}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: Math.round(CORNER * 0.1),
+                      fontWeight: 700,
+                      color: "#e2e8f0",
+                      marginTop: 4,
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {cell.name}
+                  </div>
                 </div>
               )}
 
-              {/* Name */}
-              <div
-                style={{
-                  fontSize: fs,
-                  fontWeight: 600,
-                  lineHeight: 1.2,
-                  padding: "1px 2px",
-                  marginTop: cell.color ? barH + 1 : isC ? 0 : 2,
-                  color: isC ? "#d1d5db" : "#6b7280",
-                  maxWidth: "100%",
-                  wordBreak: "break-word",
-                }}
-              >
-                {cell.name}
-              </div>
-
-              {/* Price */}
-              {BOARD_PRICES[cell.id] && !isC && (
+              {/* NON-CORNER cells */}
+              {!isC && (
                 <div
                   style={{
-                    fontSize: Math.max(5, fs - 1),
-                    color: "#374151",
-                    marginBottom: 2,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "100%",
+                    height: "100%",
+                    padding: 2,
+                    transform: rotate,
+                    paddingTop: cell.color
+                      ? cell.row === 0
+                        ? barH + 2
+                        : 4
+                      : 4,
+                    paddingBottom: cell.color
+                      ? cell.row === 10
+                        ? barH + 2
+                        : 4
+                      : 4,
+                    paddingLeft: cell.color
+                      ? cell.col === 0
+                        ? barH + 2
+                        : 2
+                      : 2,
+                    paddingRight: cell.color
+                      ? cell.col === 10
+                        ? barH + 2
+                        : 2
+                      : 2,
                   }}
                 >
-                  ${BOARD_PRICES[cell.id]}
+                  {/* special icon */}
+                  {cell.icon && !cell.color && (
+                    <div
+                      style={{
+                        fontSize: Math.round(CELL * 0.3),
+                        lineHeight: 1,
+                        marginBottom: 2,
+                      }}
+                    >
+                      {cell.icon}
+                    </div>
+                  )}
+                  <div
+                    style={{
+                      fontSize: fs,
+                      fontWeight: 600,
+                      lineHeight: 1.2,
+                      color: "#c4b5fd",
+                      maxHeight: h * 0.55,
+                      overflow: "hidden",
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    {cell.name}
+                  </div>
+                  {PRICES[cell.id] && (
+                    <div
+                      style={{
+                        fontSize: pricefs,
+                        color: "#7c3aed",
+                        fontWeight: 700,
+                        marginTop: 2,
+                      }}
+                    >
+                      {PRICES[cell.id]}$
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* Players */}
+              {/* Player tokens */}
               {here.length > 0 && (
                 <div
                   style={{
                     position: "absolute",
-                    bottom: 1,
+                    bottom: isC ? 4 : 2,
                     left: 0,
                     right: 0,
                     display: "flex",
                     justifyContent: "center",
                     flexWrap: "wrap",
-                    gap: 0,
+                    gap: 1,
+                    zIndex: 5,
                   }}
                 >
                   {here.map((p) => (
                     <span
                       key={p.id}
                       style={{
-                        fontSize: Math.max(10, Math.round(w * 0.28)),
+                        fontSize: Math.max(12, Math.round(w * 0.3)),
                         filter: p.inJail ? "grayscale(1) opacity(0.4)" : "none",
-                        textShadow: `0 0 6px ${PCOLORS[players.findIndex((x) => x.id === p.id) % PCOLORS.length]}`,
+                        textShadow: `0 0 8px ${PCOLORS[players.findIndex((x) => x.id === p.id) % PCOLORS.length]}, 0 2px 4px rgba(0,0,0,0.8)`,
                       }}
                     >
                       {p.token}
@@ -1014,275 +1184,361 @@ function Board({ game, myId }) {
           );
         })}
 
-        {/* CENTER */}
+        {/* ── BOARD CENTER ── */}
         <div
           style={{
             position: "absolute",
-            left: C,
-            top: C,
-            width: TOTAL - C * 2,
-            height: TOTAL - C * 2,
+            left: CORNER,
+            top: CORNER,
+            width: TOTAL - CORNER * 2,
+            height: TOTAL - CORNER * 2,
+            background: "linear-gradient(135deg,#0d0b14,#13111a)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             flexDirection: "column",
-            background: "linear-gradient(135deg,#0a0f1a,#111827)",
-            pointerEvents: "none",
+            gap: 16,
           }}
         >
+          {/* MONOPOLY text */}
           <div
             style={{
-              fontSize: Math.round(TOTAL * 0.055),
               fontWeight: 800,
-              color: "#22c55e",
-              letterSpacing: Math.round(TOTAL * 0.006),
+              fontSize: Math.round(TOTAL * 0.042),
+              color: "#7c3aed",
+              letterSpacing: Math.round(TOTAL * 0.005),
+              textShadow: "0 0 40px rgba(124,58,237,0.5)",
               transform: "rotate(-35deg)",
-              textShadow: "0 0 30px rgba(34,197,94,0.4)",
               whiteSpace: "nowrap",
+              position: "absolute",
+              opacity: 0.15,
+              pointerEvents: "none",
             }}
           >
             MONOPOLY
           </div>
+
+          {/* DICE — big and prominent */}
           <div
             style={{
-              fontSize: Math.max(7, Math.round(TOTAL * 0.012)),
-              color: "#1f2937",
-              letterSpacing: Math.round(TOTAL * 0.005),
-              transform: "rotate(-35deg)",
-              marginTop: -2,
-              whiteSpace: "nowrap",
+              display: "flex",
+              gap: Math.round(TOTAL * 0.025),
+              zIndex: 2,
             }}
           >
-            PROPERTY TRADING GAME
+            {(game.lastRoll || [null, null]).map((v, i) => (
+              <BigDie key={i} value={v} rolling={false} />
+            ))}
           </div>
+
+          {/* Action button in center */}
+          {isMyTurn && game.turnPhase === "roll" && (
+            <button
+              onClick={() => emit("rollDice")}
+              style={{
+                background: "linear-gradient(135deg,#7c3aed,#5b21b6)",
+                color: "#fff",
+                border: "none",
+                borderRadius: Math.round(TOTAL * 0.018),
+                padding: `${Math.round(TOTAL * 0.018)}px ${Math.round(TOTAL * 0.045)}px`,
+                fontSize: Math.round(TOTAL * 0.025),
+                fontWeight: 800,
+                cursor: "pointer",
+                letterSpacing: 1,
+                boxShadow: "0 4px 20px rgba(124,58,237,0.5)",
+                zIndex: 3,
+                whiteSpace: "nowrap",
+              }}
+            >
+              🎲 ROLL DICE
+            </button>
+          )}
+
+          {isMyTurn && game.turnPhase === "buy" && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+                alignItems: "center",
+                zIndex: 3,
+              }}
+            >
+              <div
+                style={{
+                  color: "#a78bfa",
+                  fontSize: Math.round(TOTAL * 0.02),
+                  fontWeight: 700,
+                  textAlign: "center",
+                }}
+              >
+                Buy{" "}
+                {CELLS[game.players.find((p) => p.id === myId)?.position]?.name}
+                ?
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  onClick={() => emit("buyProperty")}
+                  style={{
+                    background: "#22c55e",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 10,
+                    padding: `${Math.round(TOTAL * 0.014)}px ${Math.round(TOTAL * 0.03)}px`,
+                    fontSize: Math.round(TOTAL * 0.02),
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  ✅ Buy
+                </button>
+                <button
+                  onClick={() => emit("declineBuy")}
+                  style={{
+                    background: "#4b5563",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 10,
+                    padding: `${Math.round(TOTAL * 0.014)}px ${Math.round(TOTAL * 0.03)}px`,
+                    fontSize: Math.round(TOTAL * 0.02),
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  🔨 Auction
+                </button>
+              </div>
+            </div>
+          )}
+
+          {isMyTurn && game.turnPhase === "auction" && game.auctionState && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+                alignItems: "center",
+                zIndex: 3,
+                background: "rgba(0,0,0,0.7)",
+                borderRadius: 12,
+                padding: 16,
+                border: "1px solid #7c3aed",
+              }}
+            >
+              <div
+                style={{
+                  color: "#fbbf24",
+                  fontWeight: 700,
+                  fontSize: Math.round(TOTAL * 0.02),
+                }}
+              >
+                🔨 Auction: {CELLS[game.auctionState.propertyId]?.name}
+              </div>
+              <div
+                style={{
+                  color: "#9ca3af",
+                  fontSize: Math.round(TOTAL * 0.018),
+                }}
+              >
+                High bid:{" "}
+                <b style={{ color: "#fff" }}>{$m(game.auctionState.highBid)}</b>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input
+                  type="number"
+                  value={bidAmt}
+                  onChange={(e) => setBid(e.target.value)}
+                  placeholder="$"
+                  style={{
+                    width: 80,
+                    background: "#1e1b2e",
+                    border: "1px solid #7c3aed",
+                    borderRadius: 8,
+                    padding: "7px 10px",
+                    color: "#fff",
+                    fontSize: 13,
+                    outline: "none",
+                    textAlign: "center",
+                  }}
+                />
+                <button
+                  onClick={() => emit("auctionBid", { amount: +bidAmt })}
+                  style={{
+                    background: "#7c3aed",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 8,
+                    padding: "7px 14px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  Bid
+                </button>
+                <button
+                  onClick={() => emit("auctionEnd")}
+                  style={{
+                    background: "#374151",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 8,
+                    padding: "7px 14px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  End
+                </button>
+              </div>
+            </div>
+          )}
+
+          {isMyTurn && game.turnPhase === "endturn" && (
+            <button
+              onClick={() => emit("endTurn")}
+              style={{
+                background: "#2d2640",
+                color: "#a78bfa",
+                border: "1px solid #7c3aed",
+                borderRadius: Math.round(TOTAL * 0.015),
+                padding: `${Math.round(TOTAL * 0.014)}px ${Math.round(TOTAL * 0.035)}px`,
+                fontSize: Math.round(TOTAL * 0.022),
+                fontWeight: 700,
+                cursor: "pointer",
+                zIndex: 3,
+              }}
+            >
+              ⏭ End Turn
+            </button>
+          )}
+
+          {!isMyTurn && game.phase === "playing" && (
+            <div
+              style={{
+                color: "#4b5563",
+                fontSize: Math.round(TOTAL * 0.02),
+                textAlign: "center",
+                zIndex: 2,
+              }}
+            >
+              {
+                game.players.find(
+                  (p) => p.id === game.players[game.currentPlayerIndex]?.id,
+                )?.name
+              }
+              's turn
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-// ─── DIE ─────────────────────────────────────────────────────────────────────
-function DieComp({ v }) {
-  const f = ["", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
+// ─── BIG DIE ─────────────────────────────────────────────────────────────────
+function BigDie({ value }) {
+  const faces = ["", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
+  const sz = 72;
   return (
     <div
       style={{
-        width: 30,
-        height: 30,
+        width: sz,
+        height: sz,
         background: "#fff",
-        borderRadius: 7,
+        borderRadius: 16,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontSize: 20,
-        boxShadow: "0 2px 8px rgba(0,0,0,0.5)",
+        fontSize: 52,
         color: "#111",
+        boxShadow:
+          "0 8px 32px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.8)",
+        border: "2px solid #e5e7eb",
+        transition: "transform 0.15s",
       }}
     >
-      {f[v] || v}
+      {value ? faces[value] || value : "⬜"}
     </div>
   );
 }
 
-// ─── ACTIONS ─────────────────────────────────────────────────────────────────
+// ─── ACTIONS SIDEBAR ─────────────────────────────────────────────────────────
 function Actions({
   game,
   me,
   emit,
   bidAmt,
-  setBidAmt,
+  setBid,
   showTrade,
-  setShowTrade,
-  trade,
   setTrade,
+  tf,
+  setTF,
 }) {
-  const { turnPhase, auctionState } = game;
+  const { turnPhase } = game;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      {turnPhase === "roll" &&
-        (me?.inJail ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-            <div
-              style={{
-                color: "#fb923c",
-                fontSize: 12,
-                fontWeight: 600,
-                padding: "8px 12px",
-                background: "rgba(251,146,60,0.1)",
-                borderRadius: 8,
-                border: "1px solid rgba(251,146,60,0.2)",
-              }}
-            >
-              🔒 In Jail — Turn {(me.jailTurns || 0) + 1}/3
-            </div>
-            <Btn onClick={() => emit("rollDice")} bg="#3b82f6">
-              Roll for Doubles
-            </Btn>
-            <Btn onClick={() => emit("payJailFine")} bg="#ef4444">
-              Pay $50 Fine
-            </Btn>
-            {me.hasJailCard && (
-              <Btn onClick={() => emit("useJailCard")} bg="#8b5cf6">
-                Use Jail Free Card
-              </Btn>
-            )}
-          </div>
-        ) : (
-          <Btn onClick={() => emit("rollDice")} bg="#22c55e" big>
-            🎲 ROLL DICE
-          </Btn>
-        ))}
-
-      {turnPhase === "buy" &&
-        (() => {
-          const cell = CELLS[me?.position];
-          const price = BOARD_PRICES[me?.position];
-          return (
-            <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-              <div
-                style={{
-                  background: "#0f1117",
-                  border: "1px solid #1e2535",
-                  borderRadius: 10,
-                  padding: 12,
-                }}
-              >
-                <div
-                  style={{ color: "#9ca3af", fontSize: 11, marginBottom: 4 }}
-                >
-                  LAND ON
-                </div>
-                <div style={{ fontWeight: 700, color: "#fff", fontSize: 14 }}>
-                  {cell?.name}
-                </div>
-                {price && (
-                  <div
-                    style={{
-                      color: "#22c55e",
-                      fontSize: 13,
-                      fontWeight: 700,
-                      marginTop: 2,
-                    }}
-                  >
-                    Price: ${price}
-                  </div>
-                )}
-              </div>
-              <Btn onClick={() => emit("buyProperty")} bg="#22c55e" big>
-                ✅ Buy Property
-              </Btn>
-              <Btn onClick={() => emit("declineBuy")} bg="#4b5563">
-                🔨 Auction
-              </Btn>
-            </div>
-          );
-        })()}
-
-      {turnPhase === "auction" && auctionState && (
+      {turnPhase === "roll" && me?.inJail && (
         <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
           <div
             style={{
-              background: "rgba(251,191,36,0.08)",
-              border: "1px solid rgba(251,191,36,0.2)",
+              background: "rgba(251,146,60,0.1)",
+              border: "1px solid rgba(251,146,60,0.3)",
               borderRadius: 10,
-              padding: 10,
+              padding: "10px 12px",
+              color: "#fb923c",
+              fontSize: 12,
+              fontWeight: 600,
             }}
           >
-            <div style={{ color: "#fbbf24", fontSize: 11, fontWeight: 700 }}>
-              🔨 AUCTION
-            </div>
-            <div
-              style={{
-                color: "#fff",
-                fontWeight: 700,
-                fontSize: 13,
-                marginTop: 2,
-              }}
-            >
-              {CELLS[auctionState.propertyId]?.name}
-            </div>
-            <div style={{ color: "#9ca3af", fontSize: 12, marginTop: 3 }}>
-              High bid:{" "}
-              <b style={{ color: "#fff" }}>{$(auctionState.highBid)}</b>
-            </div>
+            🔒 In Jail — Turn {(me.jailTurns || 0) + 1}/3
           </div>
-          <div style={{ display: "flex", gap: 7 }}>
-            <input
-              type="number"
-              value={bidAmt}
-              onChange={(e) => setBidAmt(e.target.value)}
-              placeholder="Your bid $"
-              style={{
-                flex: 1,
-                background: "#0f1117",
-                border: "1px solid #374151",
-                borderRadius: 9,
-                padding: "9px 12px",
-                color: "#fff",
-                fontSize: 13,
-                outline: "none",
-              }}
-            />
-            <button
-              onClick={() => emit("auctionBid", { amount: +bidAmt })}
-              style={{
-                background: "#22c55e",
-                color: "#fff",
-                border: "none",
-                borderRadius: 9,
-                padding: "9px 16px",
-                fontWeight: 700,
-                cursor: "pointer",
-                whiteSpace: "nowrap",
-              }}
-            >
-              Bid
-            </button>
-          </div>
-          <Btn onClick={() => emit("auctionEnd")} bg="#374151">
-            End Auction
-          </Btn>
+          <SBtn onClick={() => emit("payJailFine")} bg="#ef4444">
+            Pay $50 Fine
+          </SBtn>
+          {me.hasJailCard && (
+            <SBtn onClick={() => emit("useJailCard")} bg="#8b5cf6">
+              Use Jail Free Card
+            </SBtn>
+          )}
         </div>
       )}
 
       {(turnPhase === "endturn" || turnPhase === "buy") && (
-        <Btn onClick={() => setShowTrade(!showTrade)} bg="#6366f1">
+        <SBtn onClick={() => setTrade(!showTrade)} bg="#7c3aed">
           🤝 Offer Trade
-        </Btn>
+        </SBtn>
       )}
-
       {showTrade && (
         <TradeUI
-          me={game.players.find((p) => p.id)}
+          me={me}
           players={game.players}
           properties={game.properties}
-          state={trade}
-          setState={setTrade}
+          state={tf}
+          setState={setTF}
           onSend={() => {
             emit("offerTrade", {
-              toPlayerId: trade.to,
-              offerMoney: trade.offerMoney,
-              offerProperties: trade.offerProps,
-              wantMoney: trade.wantMoney,
-              wantProperties: trade.wantProps,
+              toPlayerId: tf.to,
+              offerMoney: tf.offerM,
+              offerProperties: tf.offerP,
+              wantMoney: tf.wantM,
+              wantProperties: tf.wantP,
             });
-            setShowTrade(false);
+            setTrade(false);
           }}
-          onClose={() => setShowTrade(false)}
+          onClose={() => setTrade(false)}
         />
       )}
-
-      {turnPhase === "endturn" && (
-        <Btn onClick={() => emit("endTurn")} bg="#1f2937">
-          ⏭ End Turn
-        </Btn>
+      {me?.inJail && turnPhase === "roll" && me.hasJailCard && (
+        <SBtn onClick={() => emit("useJailCard")} bg="#8b5cf6">
+          🃏 Use Jail Free
+        </SBtn>
       )}
     </div>
   );
 }
 
-// ─── MY PROPS ─────────────────────────────────────────────────────────────────
+// ─── MY PROPERTIES ────────────────────────────────────────────────────────────
 function MyProps({ props, isMyTurn, emit }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -1296,17 +1552,17 @@ function MyProps({ props, isMyTurn, emit }) {
               display: "flex",
               alignItems: "center",
               gap: 7,
-              padding: "6px 9px",
-              background: "#0f1117",
-              borderRadius: 8,
-              border: "1px solid #1e2535",
+              padding: "7px 10px",
+              background: "#2d2640",
+              borderRadius: 9,
+              border: "1px solid #3d3550",
             }}
           >
             {cell.color && (
               <div
                 style={{
-                  width: 7,
-                  height: 7,
+                  width: 8,
+                  height: 8,
                   borderRadius: "50%",
                   background: cell.color,
                   flexShrink: 0,
@@ -1315,7 +1571,7 @@ function MyProps({ props, isMyTurn, emit }) {
             )}
             <span
               style={{
-                color: prop.mortgaged ? "#374151" : "#d1d5db",
+                color: prop.mortgaged ? "#4b5563" : "#d1d5db",
                 fontSize: 12,
                 flex: 1,
                 textDecoration: prop.mortgaged ? "line-through" : "none",
@@ -1327,12 +1583,12 @@ function MyProps({ props, isMyTurn, emit }) {
               {cell.name}
             </span>
             {prop.houses > 0 && (
-              <span style={{ fontSize: 10, flexShrink: 0 }}>
+              <span style={{ fontSize: 10 }}>
                 {prop.houses === 5 ? "🏨" : `🏠×${prop.houses}`}
               </span>
             )}
             {isMyTurn && (
-              <div style={{ display: "flex", gap: 3, flexShrink: 0 }}>
+              <div style={{ display: "flex", gap: 3 }}>
                 {!prop.mortgaged &&
                   prop.houses === 0 &&
                   cell.type === "property" && (
@@ -1376,8 +1632,8 @@ function MyProps({ props, isMyTurn, emit }) {
   );
 }
 
-// ─── PLAYER ROW ───────────────────────────────────────────────────────────────
-function PlayerRow({ p, isMe, isCurrent, color, propCount }) {
+// ─── PLAYER CARD ─────────────────────────────────────────────────────────────
+function PlayerCard({ p, isMe, isCurrent, color, propCount }) {
   const cell = CELLS.find((c) => c.id === p.position);
   return (
     <div
@@ -1385,13 +1641,13 @@ function PlayerRow({ p, isMe, isCurrent, color, propCount }) {
         display: "flex",
         alignItems: "center",
         gap: 10,
-        padding: "9px 10px",
+        padding: "8px 10px",
         marginBottom: 6,
         borderRadius: 10,
         background: isCurrent
-          ? "rgba(34,197,94,0.07)"
+          ? "rgba(124,58,237,0.12)"
           : "rgba(255,255,255,0.02)",
-        border: `1px solid ${isCurrent ? "rgba(34,197,94,0.2)" : isMe ? "rgba(255,255,255,0.05)" : "transparent"}`,
+        border: `1px solid ${isCurrent ? "#7c3aed" : isMe ? "#3d3550" : "transparent"}`,
         opacity: p.bankrupt ? 0.3 : 1,
       }}
     >
@@ -1400,8 +1656,8 @@ function PlayerRow({ p, isMe, isCurrent, color, propCount }) {
           width: 36,
           height: 36,
           borderRadius: 10,
-          background: color + "18",
-          border: `2px solid ${isCurrent ? color : "#1e2535"}`,
+          background: color + "20",
+          border: `2px solid ${isCurrent ? color : "#2d2640"}`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -1414,8 +1670,6 @@ function PlayerRow({ p, isMe, isCurrent, color, propCount }) {
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
-            fontWeight: 600,
-            fontSize: 13,
             display: "flex",
             alignItems: "center",
             gap: 6,
@@ -1424,6 +1678,8 @@ function PlayerRow({ p, isMe, isCurrent, color, propCount }) {
         >
           <span
             style={{
+              fontWeight: 700,
+              fontSize: 13,
               color: "#fff",
               whiteSpace: "nowrap",
               overflow: "hidden",
@@ -1436,40 +1692,32 @@ function PlayerRow({ p, isMe, isCurrent, color, propCount }) {
           {isMe && (
             <span
               style={{
-                color: "#22c55e",
                 fontSize: 9,
                 fontWeight: 700,
+                color: "#22c55e",
                 background: "rgba(34,197,94,0.1)",
                 padding: "1px 6px",
-                borderRadius: 10,
-                flexShrink: 0,
+                borderRadius: 8,
               }}
             >
               YOU
             </span>
           )}
           {p.inJail && (
-            <span style={{ color: "#fb923c", fontSize: 10 }}>🔒</span>
+            <span style={{ fontSize: 10, color: "#fb923c" }}>🔒</span>
           )}
         </div>
-        <div
-          style={{
-            color: "#4b5563",
-            fontSize: 11,
-            marginTop: 1,
-            whiteSpace: "nowrap",
-          }}
-        >
-          {cell?.name} ·{" "}
-          <span style={{ color: "#22c55e", fontWeight: 700 }}>
-            {$(p.money)}
-          </span>
+        <div style={{ fontSize: 11, color: "#6b7280", marginTop: 1 }}>
+          {cell?.name}
+        </div>
+        <div style={{ fontSize: 12, color: "#a78bfa", fontWeight: 700 }}>
+          {$m(p.money)}
         </div>
       </div>
       <div
         style={{
-          color: "#374151",
           fontSize: 11,
+          color: "#4b5563",
           fontWeight: 700,
           flexShrink: 0,
         }}
@@ -1480,23 +1728,22 @@ function PlayerRow({ p, isMe, isCurrent, color, propCount }) {
   );
 }
 
-// ─── TRADE UI ─────────────────────────────────────────────────────────────────
+// ─── TRADE ───────────────────────────────────────────────────────────────────
 function TradeUI({
-  players = [],
-  properties = {},
+  me,
+  players,
+  properties,
   state,
   setState,
   onSend,
   onClose,
 }) {
-  const me = players.find((p) => p); // will be fixed below
-  const others = players.filter((p) => !p.bankrupt);
-  const myId = state.myId;
-  const myProps = Object.entries(properties).filter(
-    ([, p]) => p.owner === myId,
+  const others = players.filter((p) => p.id !== me?.id && !p.bankrupt);
+  const myProps = Object.entries(properties || {}).filter(
+    ([, p]) => p.owner === me?.id,
   );
   const theirProps = state.to
-    ? Object.entries(properties).filter(([, p]) => p.owner === state.to)
+    ? Object.entries(properties || {}).filter(([, p]) => p.owner === state.to)
     : [];
   const toggle = (id, arr, key) =>
     setState((s) => ({
@@ -1507,8 +1754,8 @@ function TradeUI({
   return (
     <div
       style={{
-        background: "#0f1117",
-        border: "1px solid #312e81",
+        background: "#1e1b2e",
+        border: "1px solid #7c3aed",
         borderRadius: 12,
         padding: 14,
       }}
@@ -1517,22 +1764,20 @@ function TradeUI({
         style={{
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "center",
           marginBottom: 10,
         }}
       >
-        <span style={{ color: "#818cf8", fontSize: 12, fontWeight: 700 }}>
+        <span style={{ color: "#a78bfa", fontSize: 12, fontWeight: 700 }}>
           🤝 TRADE OFFER
         </span>
         <button
           onClick={onClose}
           style={{
-            color: "#6b7280",
             background: "none",
             border: "none",
+            color: "#6b7280",
             cursor: "pointer",
             fontSize: 18,
-            lineHeight: 1,
           }}
         >
           ✕
@@ -1543,12 +1788,12 @@ function TradeUI({
         onChange={(e) => setState((s) => ({ ...s, to: e.target.value }))}
         style={{
           width: "100%",
-          background: "#161b27",
-          border: "1px solid #312e81",
+          background: "#2d2640",
+          border: "1px solid #7c3aed",
           borderRadius: 8,
-          padding: "8px 10px",
+          padding: "8px",
           color: "#fff",
-          fontSize: 13,
+          fontSize: 12,
           marginBottom: 10,
           outline: "none",
         }}
@@ -1562,46 +1807,32 @@ function TradeUI({
       </select>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         {[
-          [
-            "YOU OFFER",
-            state.offerMoney,
-            "offerMoney",
-            myProps,
-            state.offerProps,
-            "offerProps",
-          ],
-          [
-            "YOU WANT",
-            state.wantMoney,
-            "wantMoney",
-            theirProps,
-            state.wantProps,
-            "wantProps",
-          ],
-        ].map(([label, money, moneyKey, props, checked, propsKey]) => (
-          <div key={label}>
+          ["OFFER", state.offerM, "offerM", myProps, state.offerP, "offerP"],
+          ["WANT", state.wantM, "wantM", theirProps, state.wantP, "wantP"],
+        ].map(([lbl, money, mkey, props, checked, pkey]) => (
+          <div key={lbl}>
             <div
               style={{
-                color: "#818cf8",
+                color: "#a78bfa",
                 fontSize: 10,
                 fontWeight: 700,
                 marginBottom: 6,
               }}
             >
-              {label}
+              {lbl}
             </div>
             <input
               type="number"
               min={0}
               value={money}
               onChange={(e) =>
-                setState((s) => ({ ...s, [moneyKey]: +e.target.value }))
+                setState((s) => ({ ...s, [mkey]: +e.target.value }))
               }
               placeholder="$"
               style={{
                 width: "100%",
-                background: "#161b27",
-                border: "1px solid #1e2535",
+                background: "#2d2640",
+                border: "1px solid #3d3550",
                 borderRadius: 6,
                 padding: "5px 8px",
                 color: "#fff",
@@ -1627,8 +1858,8 @@ function TradeUI({
                   <input
                     type="checkbox"
                     checked={checked.includes(id)}
-                    onChange={() => toggle(id, checked, propsKey)}
-                    style={{ accentColor: "#6366f1" }}
+                    onChange={() => toggle(id, checked, pkey)}
+                    style={{ accentColor: "#7c3aed" }}
                   />
                   {c?.color && (
                     <div
@@ -1637,19 +1868,10 @@ function TradeUI({
                         height: 6,
                         borderRadius: "50%",
                         background: c.color,
-                        flexShrink: 0,
                       }}
                     />
                   )}
-                  <span
-                    style={{
-                      color: "#d1d5db",
-                      fontSize: 11,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
+                  <span style={{ color: "#d1d5db", fontSize: 11 }}>
                     {c?.name}
                   </span>
                 </label>
@@ -1664,7 +1886,7 @@ function TradeUI({
         style={{
           marginTop: 10,
           width: "100%",
-          background: state.to ? "#6366f1" : "#1e2535",
+          background: state.to ? "#7c3aed" : "#2d2640",
           color: state.to ? "#fff" : "#4b5563",
           border: "none",
           padding: "10px",
@@ -1685,15 +1907,15 @@ function TradeReview({ trade, players, onAccept, onDecline }) {
   return (
     <div
       style={{
-        background: "rgba(99,102,241,0.08)",
-        border: "1px solid #4f46e5",
+        background: "rgba(124,58,237,0.1)",
+        border: "1px solid #7c3aed",
         borderRadius: 12,
         padding: 14,
       }}
     >
       <div
         style={{
-          color: "#818cf8",
+          color: "#a78bfa",
           fontSize: 12,
           fontWeight: 700,
           marginBottom: 8,
@@ -1702,10 +1924,11 @@ function TradeReview({ trade, players, onAccept, onDecline }) {
         🤝 Trade from <b>{from?.name}</b>
       </div>
       <div style={{ color: "#d1d5db", fontSize: 12, marginBottom: 3 }}>
-        Offers: {$(trade.offerMoney)} + {trade.offerProperties?.length} props
+        Offers: {$m(trade.offerMoney)} + {trade.offerProperties?.length || 0}{" "}
+        props
       </div>
       <div style={{ color: "#d1d5db", fontSize: 12, marginBottom: 12 }}>
-        Wants: {$(trade.wantMoney)} + {trade.wantProperties?.length} props
+        Wants: {$m(trade.wantMoney)} + {trade.wantProperties?.length || 0} props
       </div>
       <div style={{ display: "flex", gap: 8 }}>
         <button
@@ -1743,52 +1966,7 @@ function TradeReview({ trade, players, onAccept, onDecline }) {
   );
 }
 
-// ─── SPLASH ───────────────────────────────────────────────────────────────────
-function Splash() {
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#0f1117",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexDirection: "column",
-        gap: 16,
-      }}
-    >
-      <div
-        style={{
-          width: 64,
-          height: 64,
-          background: "linear-gradient(135deg,#22c55e,#16a34a)",
-          borderRadius: 18,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 34,
-        }}
-      >
-        🎩
-      </div>
-      <div
-        style={{
-          fontWeight: 800,
-          fontSize: 26,
-          color: "#fff",
-          letterSpacing: 2,
-        }}
-      >
-        MONOPOLY ONLINE
-      </div>
-      <div style={{ color: "#4b5563", fontSize: 14 }}>
-        Connecting to server...
-      </div>
-    </div>
-  );
-}
-
-// ─── LOBBY ────────────────────────────────────────────────────────────────────
+// ─── LOBBY ───────────────────────────────────────────────────────────────────
 function Lobby({
   roomId,
   setRoomId,
@@ -1809,13 +1987,14 @@ function Lobby({
     <div
       style={{
         minHeight: "100vh",
-        background: "#0f1117",
+        background: "#13111a",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         padding: 20,
         position: "relative",
         overflow: "hidden",
+        fontFamily: "'Inter',system-ui,sans-serif",
       }}
     >
       <link
@@ -1826,26 +2005,26 @@ function Lobby({
       <div
         style={{
           position: "absolute",
-          top: "-15%",
-          left: "-10%",
-          width: 500,
-          height: 500,
+          top: "-20%",
+          left: "30%",
+          width: 600,
+          height: 600,
           borderRadius: "50%",
           background:
-            "radial-gradient(circle,rgba(34,197,94,0.07),transparent 70%)",
+            "radial-gradient(circle,rgba(124,58,237,0.08),transparent 65%)",
           pointerEvents: "none",
         }}
       />
       <div
         style={{
           position: "absolute",
-          bottom: "-15%",
-          right: "-10%",
-          width: 400,
-          height: 400,
+          bottom: "-20%",
+          right: "20%",
+          width: 500,
+          height: 500,
           borderRadius: "50%",
           background:
-            "radial-gradient(circle,rgba(99,102,241,0.06),transparent 70%)",
+            "radial-gradient(circle,rgba(34,197,94,0.05),transparent 65%)",
           pointerEvents: "none",
         }}
       />
@@ -1853,7 +2032,7 @@ function Lobby({
       <div
         style={{
           width: "100%",
-          maxWidth: 420,
+          maxWidth: 440,
           position: "relative",
           zIndex: 1,
         }}
@@ -1862,16 +2041,16 @@ function Lobby({
         <div style={{ textAlign: "center", marginBottom: 36 }}>
           <div
             style={{
-              width: 70,
-              height: 70,
-              background: "linear-gradient(135deg,#22c55e,#16a34a)",
-              borderRadius: 20,
+              width: 76,
+              height: 76,
+              background: "linear-gradient(135deg,#7c3aed,#5b21b6)",
+              borderRadius: 22,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 36,
-              margin: "0 auto 14px",
-              boxShadow: "0 0 40px rgba(34,197,94,0.3)",
+              fontSize: 40,
+              margin: "0 auto 16px",
+              boxShadow: "0 0 50px rgba(124,58,237,0.4)",
             }}
           >
             🎩
@@ -1879,17 +2058,16 @@ function Lobby({
           <div
             style={{
               fontWeight: 800,
-              fontSize: 34,
+              fontSize: 36,
               color: "#fff",
               letterSpacing: 2,
-              fontFamily: "'Inter',sans-serif",
             }}
           >
             MONOPOLY
           </div>
           <div
             style={{
-              color: "#22c55e",
+              color: "#7c3aed",
               fontSize: 12,
               fontWeight: 700,
               letterSpacing: 4,
@@ -1900,14 +2078,13 @@ function Lobby({
           </div>
         </div>
 
-        {/* Card */}
         <div
           style={{
-            background: "#161b27",
-            border: "1px solid #1e2535",
+            background: "#1a1625",
+            border: "1px solid #2d2640",
             borderRadius: 20,
-            padding: 28,
-            boxShadow: "0 25px 60px rgba(0,0,0,0.5)",
+            padding: 30,
+            boxShadow: "0 30px 80px rgba(0,0,0,0.6)",
           }}
         >
           {err && (
@@ -1926,20 +2103,20 @@ function Lobby({
             </div>
           )}
 
-          <LobbyField
+          <LField
             label="ROOM ID"
             value={roomId}
             onChange={setRoomId}
             placeholder="Enter room code"
           />
-          <LobbyField
+          <LField
             label="YOUR NAME"
             value={name}
             onChange={setName}
             placeholder="Your nickname"
           />
 
-          <div style={{ marginBottom: 20 }}>
+          <div style={{ marginBottom: 22 }}>
             <div
               style={{
                 color: "#4b5563",
@@ -1949,7 +2126,7 @@ function Lobby({
                 marginBottom: 10,
               }}
             >
-              CHOOSE YOUR TOKEN
+              CHOOSE TOKEN
             </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {TOKENS.map((t) => (
@@ -1957,12 +2134,13 @@ function Lobby({
                   key={t}
                   onClick={() => setToken(t)}
                   style={{
-                    width: 42,
-                    height: 42,
-                    fontSize: 20,
-                    borderRadius: 10,
-                    border: `2px solid ${token === t ? "#22c55e" : "#1e2535"}`,
-                    background: token === t ? "rgba(34,197,94,0.1)" : "#0f1117",
+                    width: 44,
+                    height: 44,
+                    fontSize: 22,
+                    borderRadius: 11,
+                    border: `2px solid ${token === t ? "#7c3aed" : "#2d2640"}`,
+                    background:
+                      token === t ? "rgba(124,58,237,0.15)" : "#13111a",
                     cursor: "pointer",
                     transform: token === t ? "scale(1.12)" : "scale(1)",
                     transition: "all 0.15s",
@@ -1978,7 +2156,21 @@ function Lobby({
             <button
               onClick={onJoin}
               disabled={!roomId || !name}
-              style={!roomId || !name ? S.disabledBtn : S.greenBtn}
+              style={{
+                width: "100%",
+                background:
+                  !roomId || !name
+                    ? "#2d2640"
+                    : "linear-gradient(135deg,#7c3aed,#5b21b6)",
+                color: !roomId || !name ? "#4b5563" : "#fff",
+                border: "none",
+                padding: "14px",
+                borderRadius: 12,
+                fontWeight: 700,
+                fontSize: 16,
+                cursor: !roomId || !name ? "not-allowed" : "pointer",
+                letterSpacing: 1,
+              }}
             >
               JOIN ROOM
             </button>
@@ -1987,16 +2179,16 @@ function Lobby({
           {game?.players?.length > 0 && (
             <div
               style={{
-                marginTop: 18,
-                background: "#0f1117",
+                marginTop: 20,
+                background: "#13111a",
                 borderRadius: 12,
                 padding: 14,
-                border: "1px solid #1e2535",
+                border: "1px solid #2d2640",
               }}
             >
               <div
                 style={{
-                  color: "#374151",
+                  color: "#4b5563",
                   fontSize: 10,
                   fontWeight: 700,
                   letterSpacing: 2,
@@ -2012,20 +2204,20 @@ function Lobby({
                     display: "flex",
                     alignItems: "center",
                     gap: 10,
-                    padding: "7px 0",
-                    borderBottom: "1px solid #111827",
+                    padding: "8px 0",
+                    borderBottom: "1px solid #1e1b2e",
                   }}
                 >
                   <div
                     style={{
-                      width: 30,
-                      height: 30,
+                      width: 32,
+                      height: 32,
                       borderRadius: 8,
                       background: PCOLORS[i % PCOLORS.length] + "20",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      fontSize: 16,
+                      fontSize: 18,
                     }}
                   >
                     {p.token}
@@ -2034,7 +2226,7 @@ function Lobby({
                     style={{
                       color: "#fff",
                       fontWeight: 600,
-                      fontSize: 13,
+                      fontSize: 14,
                       flex: 1,
                     }}
                   >
@@ -2068,18 +2260,32 @@ function Lobby({
           )}
 
           {joined && isHost && game.players.length >= 2 && (
-            <button onClick={onStart} style={{ ...S.greenBtn, marginTop: 16 }}>
+            <button
+              onClick={onStart}
+              style={{
+                width: "100%",
+                marginTop: 16,
+                background: "linear-gradient(135deg,#22c55e,#16a34a)",
+                color: "#fff",
+                border: "none",
+                padding: "14px",
+                borderRadius: 12,
+                fontWeight: 700,
+                fontSize: 16,
+                cursor: "pointer",
+                letterSpacing: 1,
+              }}
+            >
               ▶ START GAME
             </button>
           )}
           {joined && isHost && game.players.length < 2 && (
             <div
               style={{
-                marginTop: 16,
+                marginTop: 14,
                 textAlign: "center",
                 color: "#4b5563",
                 fontSize: 13,
-                padding: 10,
               }}
             >
               ⏳ Waiting for more players...
@@ -2088,23 +2294,21 @@ function Lobby({
           {joined && !isHost && (
             <div
               style={{
-                marginTop: 16,
+                marginTop: 14,
                 textAlign: "center",
                 color: "#4b5563",
                 fontSize: 13,
-                padding: 10,
               }}
             >
               ⏳ Waiting for host to start...
             </div>
           )}
         </div>
-
         <div
           style={{
             textAlign: "center",
-            marginTop: 16,
-            color: "#1f2937",
+            marginTop: 14,
+            color: "#2d2640",
             fontSize: 12,
           }}
         >
@@ -2115,7 +2319,7 @@ function Lobby({
   );
 }
 
-function LobbyField({ label, value, onChange, placeholder }) {
+function LField({ label, value, onChange, placeholder }) {
   const [focus, setFocus] = useState(false);
   return (
     <div style={{ marginBottom: 16 }}>
@@ -2134,37 +2338,87 @@ function LobbyField({ label, value, onChange, placeholder }) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        style={{
-          ...S.input,
-          borderColor: focus ? "#22c55e" : "#1e2535",
-          transition: "border-color 0.15s",
-        }}
         onFocus={() => setFocus(true)}
         onBlur={() => setFocus(false)}
+        style={{
+          width: "100%",
+          background: "#13111a",
+          border: `1px solid ${focus ? "#7c3aed" : "#2d2640"}`,
+          borderRadius: 10,
+          padding: "11px 14px",
+          color: "#fff",
+          fontSize: 14,
+          outline: "none",
+          boxSizing: "border-box",
+          transition: "border-color 0.15s",
+        }}
       />
     </div>
   );
 }
 
-// ─── WIN SCREEN ───────────────────────────────────────────────────────────────
+function Splash() {
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#13111a",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexDirection: "column",
+        gap: 16,
+        fontFamily: "system-ui",
+      }}
+    >
+      <div
+        style={{
+          width: 64,
+          height: 64,
+          background: "linear-gradient(135deg,#7c3aed,#5b21b6)",
+          borderRadius: 18,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 34,
+        }}
+      >
+        🎩
+      </div>
+      <div
+        style={{
+          fontWeight: 800,
+          fontSize: 26,
+          color: "#fff",
+          letterSpacing: 2,
+        }}
+      >
+        MONOPOLY ONLINE
+      </div>
+      <div style={{ color: "#4b5563", fontSize: 14 }}>Connecting...</div>
+    </div>
+  );
+}
+
 function WinScreen({ winner }) {
   return (
     <div
       style={{
         minHeight: "100vh",
-        background: "#0f1117",
+        background: "#13111a",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         flexDirection: "column",
         gap: 18,
+        fontFamily: "system-ui",
       }}
     >
       <div style={{ fontSize: 80 }}>🏆</div>
       <div
         style={{
           fontWeight: 800,
-          fontSize: 38,
+          fontSize: 40,
           color: "#fbbf24",
           letterSpacing: 2,
         }}
@@ -2176,11 +2430,14 @@ function WinScreen({ winner }) {
         onClick={() => window.location.reload()}
         style={{
           marginTop: 8,
-          ...S.greenBtn,
-          width: "auto",
+          background: "linear-gradient(135deg,#7c3aed,#5b21b6)",
+          color: "#fff",
+          border: "none",
           padding: "14px 40px",
-          fontSize: 16,
           borderRadius: 14,
+          fontSize: 16,
+          fontWeight: 700,
+          cursor: "pointer",
         }}
       >
         PLAY AGAIN
@@ -2189,28 +2446,24 @@ function WinScreen({ winner }) {
   );
 }
 
-// ─── UTILS ────────────────────────────────────────────────────────────────────
-function Btn({ children, onClick, bg = "#374151", big = false }) {
-  const [hover, setHover] = useState(false);
+function SBtn({ children, onClick, bg = "#374151" }) {
   return (
     <button
       onClick={onClick}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
       style={{
         width: "100%",
         background: bg,
         color: "#fff",
         border: "none",
-        padding: big ? "13px 16px" : "10px 16px",
+        padding: "11px 16px",
         borderRadius: 10,
         fontWeight: 700,
-        fontSize: big ? 15 : 13,
+        fontSize: 13,
         cursor: "pointer",
-        letterSpacing: big ? 1 : 0,
-        opacity: hover ? 1 : 0.88,
         transition: "opacity 0.15s",
       }}
+      onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
+      onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
     >
       {children}
     </button>
@@ -2225,10 +2478,10 @@ function Tiny({ children, onClick, bg }) {
         background: bg,
         color: "#fff",
         border: "none",
-        width: 20,
-        height: 20,
-        borderRadius: 5,
-        fontSize: 10,
+        width: 22,
+        height: 22,
+        borderRadius: 6,
+        fontSize: 11,
         fontWeight: 700,
         cursor: "pointer",
         display: "flex",
