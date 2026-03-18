@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { io } from "socket.io-client";
 
-const SERVER_URL = "https://jokergame-1.onrender.com"; // ← replace with your Render URL
+const SERVER_URL = "https://jokergame-p4vy.onrender.com"; // ← replace with your Render URL
 
 // ─── DATA ─────────────────────────────────────────────────────────────────────
 const CELLS = [
